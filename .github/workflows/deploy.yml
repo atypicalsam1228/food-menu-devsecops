@@ -6,9 +6,9 @@ on:
       - main
 
 permissions:
-  id-token: write      # Required for OIDC
-  contents: read       # Required for checkout
-  security-events: write  # Required for SARIF uploads
+  id-token: write
+  contents: read
+  security-events: write
 
 jobs:
   security-scan:
@@ -20,17 +20,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Step 1: Secret Detection
       - name: Detect secrets with Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 2: Dependency Scan
       - name: Run npm audit
         run: npm audit --audit-level=high
 
-      # Step 3: SAST
       - name: Run Semgrep SAST
         uses: returntocorp/semgrep-action@v1
         with:
@@ -43,21 +40,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Step 4: OIDC Authentication
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Step 5: Build
       - name: Build Docker image
         run: docker build --platform linux/amd64 -t ${{ secrets.ECR_REPOSITORY }} .
 
-      # Step 6: Container Scan
       - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
@@ -73,7 +68,6 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
 
-      # Step 7: Push to ECR (only if scan passed)
       - name: Tag and Push Docker image
         run: |
           IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
@@ -90,8 +84,8 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
 
-      # Step 8: Deploy
       - name: Update ECS service
         run: |
           aws ecs update-service \

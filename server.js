@@ -3,7 +3,7 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const APP_VERSION = process.env.APP_VERSION || "v2.0";
+const APP_VERSION = process.env.APP_VERSION || "v3.0";
 
 // Sample menu data (no database)
 const menu = [

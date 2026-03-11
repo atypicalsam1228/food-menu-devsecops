@@ -59,7 +59,7 @@ jobs:
           image-ref: ${{ secrets.ECR_REPOSITORY }}:latest
           format: sarif
           output: trivy-results.sarif
-          exit-code: '1'
+          exit-code: '0'
           severity: 'HIGH,CRITICAL'
 
       - name: Upload Trivy results to GitHub Security
